@@ -31,7 +31,10 @@
       "Bash(git credential *)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit -m 'دونيرا: نظام إدارة وعرض المنيو مع توليد PDF و QR *)"
+      "Bash(git commit -m 'دونيرا: نظام إدارة وعرض المنيو مع توليد PDF و QR *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(node publish.js --push)"
     ]
   }
 }

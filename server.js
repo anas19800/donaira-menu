@@ -403,6 +403,15 @@ app.get('/img', async (req, res) => {
   }
 });
 
+// ---- publish to GitHub Pages ----
+app.post('/api/publish', (req, res) => {
+  const { execFile } = require('child_process');
+  execFile(process.execPath, [path.join(__dirname, 'publish.js'), '--push'], { cwd: __dirname, timeout: 120000 }, (err, stdout, stderr) => {
+    if (err) return res.status(500).json({ error: ((stderr || '') + (err.message || '')).slice(-500) });
+    res.json({ ok: true, log: stdout });
+  });
+});
+
 // ---- pages ----
 app.get('/', (req, res) => res.redirect('/admin'));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));

@@ -78,6 +78,7 @@ dialog .dfoot{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-start;p
 <header>
   <h1>🍽️ إدارة المنيو</h1>
   <span class="spacer"></span>
+  <button class="btn primary" id="btnPublish">🚀 نشر أونلاين</button>
   <a class="btn" href="/menu" target="_blank">🌐 عرض المنيو</a>
   <a class="btn" href="/print" target="_blank">🖨️ نسخة الطباعة</a>
   <button class="btn" id="btnQr">📱 QR</button>
@@ -424,6 +425,21 @@ $('#frmSettings').addEventListener('submit', async (e)=>{
   await api('/api/settings',{method:'PUT',body:JSON.stringify(body)});
   $('#dlgSettings').close(); load(); toast('تم حفظ الإعدادات');
 });
+
+// ---- publish online ----
+$('#btnPublish').onclick = async ()=>{
+  const b = $('#btnPublish');
+  b.disabled = true; b.textContent = '⏳ جاري النشر…';
+  try {
+    const r = await fetch('/api/publish', {method:'POST'});
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    toast('تم النشر ✅ سيتحدث الموقع خلال دقيقة');
+  } catch(e) {
+    toast('فشل النشر: ' + e.message);
+  }
+  b.disabled = false; b.textContent = '🚀 نشر أونلاين';
+};
 
 // ---- QR ----
 let qrObj = null;
