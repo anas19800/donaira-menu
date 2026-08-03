@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>إدارة المنيو — دونيرا</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --red:#ec1c24; --red-dark:#a3121f; --pink:#f6dedd; --orange:#f5a623;
+  --bg:#f6f4f1; --card:#fff; --text:#2c2320; --muted:#9a8f88; --line:#eae4df;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+header h1{font-size:20px;color:var(--red-dark)}
+header .spacer{flex:1}
+.btn{border:none;border-radius:10px;padding:8px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;background:#efe9e4;color:var(--text);transition:.15s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn:hover{filter:brightness(.95)}
+.btn.primary{background:var(--red);color:#fff}
+.btn.ghost{background:transparent;border:1.5px solid var(--line)}
+.btn.small{padding:4px 10px;font-size:12px;border-radius:8px}
+.btn.danger{background:#fdecea;color:#c0392b}
+.layout{display:grid;grid-template-columns:280px 1fr;gap:16px;padding:16px 20px;max-width:1400px;margin:0 auto}
+@media(max-width:800px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.panel h2{font-size:15px;padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+#catList{list-style:none;max-height:70vh;overflow:auto}
+#catList li{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;font-weight:700;font-size:14px}
+#catList li:hover{background:#faf7f4}
+#catList li.active{background:var(--pink);color:var(--red-dark)}
+#catList li .cnt{font-size:11px;color:var(--muted);font-weight:400}
+#catList li .grow{flex:1}
+#catList li.hiddenCat .catName{opacity:.45;text-decoration:line-through}
+.iconbtn{border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--muted);padding:2px 4px;border-radius:6px}
+.iconbtn:hover{background:#eee;color:var(--text)}
+.items-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.items-head h2{font-size:17px;border:none;padding:0;color:var(--red-dark)}
+.item-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.item-row:hover{background:#fbf9f7}
+.item-row img{width:52px;height:52px;border-radius:10px;object-fit:cover;background:#eee;flex-shrink:0}
+.item-row .info{flex:1;min-width:0}
+.item-row .nm{font-weight:800;font-size:15px}
+.item-row .en{font-size:12px;color:var(--muted)}
+.item-row .desc{font-size:12px;color:#7a6f68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}
+.pricebadge{background:var(--pink);color:var(--red-dark);font-weight:800;border-radius:8px;padding:3px 10px;font-size:14px;white-space:nowrap}
+.kcal{font-size:11px;color:#fff;background:var(--orange);border-radius:6px;padding:1px 7px;white-space:nowrap}
+.hiddenItem{opacity:.45}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0;cursor:pointer}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:#ccc;border-radius:20px;transition:.2s}
+.switch span:before{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:2px;right:2px;transition:.2s}
+.switch input:checked + span{background:#2ecc71}
+.switch input:checked + span:before{transform:translateX(-16px)}
+dialog{border:none;border-radius:16px;padding:0;max-width:560px;width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:'Cairo',sans-serif}
+dialog::backdrop{background:rgba(30,20,15,.45)}
+dialog .dhead{padding:14px 20px;border-bottom:1px solid var(--line);font-weight:800;font-size:16px;color:var(--red-dark)}
+dialog form{padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+dialog form .full{grid-column:1/-1}
+dialog label{font-size:12px;font-weight:700;color:#6b5f58;display:block;margin-bottom:3px}
+dialog input,dialog textarea,dialog select{width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;background:#fff}
+dialog input:focus,dialog textarea:focus{outline:none;border-color:var(--red)}
+dialog .dfoot{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-start;padding-top:6px}
+.imgpick{display:flex;gap:8px;align-items:center}
+.imgpick img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#eee}
+.toast{position:fixed;bottom:20px;right:50%;transform:translateX(50%);background:#2c2320;color:#fff;padding:10px 22px;border-radius:12px;font-weight:700;z-index:99;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+#qrBox{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px}
+#qrCanvas{background:#fff;padding:12px;border-radius:12px;border:1px solid var(--line)}
+.settings-grid{padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.settings-grid .full{grid-column:1/-1}
+</style>
+</head>
+<body>
+<header>
+  <h1>🍽️ إدارة المنيو</h1>
+  <span class="spacer"></span>
+  <a class="btn" href="/menu" target="_blank">🌐 عرض المنيو</a>
+  <a class="btn" href="/print" target="_blank">🖨️ نسخة الطباعة</a>
+  <button class="btn" id="btnQr">📱 QR</button>
+  <button class="btn" id="btnSettings">⚙️ الإعدادات</button>
+  <button class="btn" id="btnImport">⬆️ استيراد</button>
+  <button class="btn" id="btnExportCsv">⬇️ CSV</button>
+  <button class="btn" id="btnExportXlsx">⬇️ Excel</button>
+</header>
+
+<div class="layout">
+  <div class="panel">
+    <h2>الأقسام <button class="btn small primary" id="btnAddCat">+ قسم</button></h2>
+    <ul id="catList"></ul>
+  </div>
+  <div class="panel">
+    <div class="items-head">
+      <h2 id="curCatName">الأصناف</h2>
+      <span class="spacer" style="flex:1"></span>
+      <button class="btn small primary" id="btnAddItem">+ صنف جديد</button>
+    </div>
+    <div id="itemList"></div>
+  </div>
+</div>
+
+<!-- item dialog -->
+<dialog id="dlgItem">
+  <div class="dhead" id="dlgItemTitle">صنف جديد</div>
+  <form method="dialog" id="frmItem">
+    <div><label>الاسم بالعربي *</label><input name="name_ar" required></div>
+    <div><label>الاسم بالإنجليزي</label><input name="name_en" dir="ltr"></div>
+    <div><label>السعر *</label><input name="price" type="number" step="0.5" required></div>
+    <div><label>السعرات الحرارية</label><input name="calories" type="number"></div>
+    <div class="full"><label>الوصف (عربي)</label><textarea name="desc_ar" rows="2"></textarea></div>
+    <div class="full"><label>الوصف (إنجليزي)</label><textarea name="desc_en" rows="2" dir="ltr"></textarea></div>
+    <div><label>سعر ثانٍ (اختياري — مثال: لحم/دجاج)</label><input name="price2" type="number" step="0.5"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><label>تسمية السعر الأول</label><input name="price_label" placeholder="دجاج"></div>
+      <div><label>تسمية السعر الثاني</label><input name="price2_label" placeholder="لحم"></div>
+    </div>
+    <div class="full"><label>الصورة</label>
+      <div class="imgpick">
+        <img id="imgPreview" src="" onerror="this.style.visibility='hidden'">
+        <input name="image" id="imgUrl" placeholder="رابط الصورة أو ارفع ملفاً" dir="ltr" style="flex:1">
+        <label class="btn small" style="margin:0">📁 رفع<input type="file" id="imgFile" accept="image/*" hidden></label>
+      </div>
+    </div>
+    <div><label>القسم</label><select name="categoryId" id="selCat"></select></div>
+    <div style="display:flex;align-items:end;gap:8px;padding-bottom:6px">
+      <label style="margin:0">ظاهر في المنيو</label>
+      <label class="switch"><input type="checkbox" name="visible" checked><span></span></label>
+    </div>
+    <div class="dfoot">
+      <button class="btn primary" value="save">💾 حفظ</button>
+      <button class="btn" value="cancel" formnovalidate>إلغاء</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- import dialog -->
+<dialog id="dlgImport">
+  <div class="dhead">استيراد من CSV / Excel</div>
+  <form method="dialog" style="display:block">
+    <p style="font-size:13px;color:#6b5f58;margin-bottom:10px">
+      الأعمدة المطلوبة: <b>القسم، اسم المنتج، السعر</b><br>
+      أعمدة اختيارية: الاسم الانجليزي، السعر 2، الوصف، السعرات، رابط الصورة، ظاهر
+    </p>
+    <input type="file" id="impFile" accept=".csv,.xlsx,.xls" style="margin-bottom:12px">
+    <div style="margin-bottom:12px">
+      <label style="font-weight:700;font-size:13px"><input type="radio" name="impMode" value="merge" checked> دمج (تحديث الموجود وإضافة الجديد)</label><br>
+      <label style="font-weight:700;font-size:13px;color:#c0392b"><input type="radio" name="impMode" value="replace"> استبدال الكل (حذف كل شيء ثم الاستيراد)</label>
+    </div>
+    <div class="dfoot">
+      <button class="btn primary" id="btnDoImport" value="import">⬆️ استيراد</button>
+      <button class="btn" value="cancel">إلغاء</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- settings dialog -->
+<dialog id="dlgSettings">
+  <div class="dhead">إعدادات المطعم</div>
+  <form method="dialog" id="frmSettings">
+    <div class="settings-grid" style="padding:0">
+      <div><label>اسم المطعم (عربي)</label><input name="name_ar"></div>
+      <div><label>اسم المطعم (إنجليزي)</label><input name="name_en" dir="ltr"></div>
+      <div class="full"><label>الشعار النصي / السلوجن</label><input name="slogan"></div>
+      <div><label>العملة</label><input name="currency"></div>
+      <div><label>حساب التواصل (للمنيو المطبوع)</label><input name="social" dir="ltr"></div>
+      <div class="full"><label>رابط المنيو العام (للـ QR — اتركه فارغاً لاستخدام الرابط الحالي)</label><input name="publicUrl" dir="ltr" placeholder="https://example.com/menu"></div>
+      <div class="full"><label>شعار / لوجو (رابط صورة)</label>
+        <div class="imgpick">
+          <input name="logo" id="logoUrl" dir="ltr" style="flex:1">
+          <label class="btn small" style="margin:0">📁 رفع<input type="file" id="logoFile" accept="image/*" hidden></label>
+        </div>
+      </div>
+    </div>
+    <div class="dfoot">
+      <button class="btn primary" value="save">💾 حفظ</button>
+      <button class="btn" value="cancel" formnovalidate>إلغاء</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- QR dialog -->
+<dialog id="dlgQr">
+  <div class="dhead">رمز QR للمنيو</div>
+  <div id="qrBox">
+    <div id="qrCanvas"></div>
+    <div id="qrUrl" style="font-size:12px;color:#888;direction:ltr"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn primary" id="btnQrDownload">⬇️ تحميل PNG</button>
+      <form method="dialog"><button class="btn">إغلاق</button></form>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let DB = null;
+let curCat = null;
+let editItemId = null;
+
+const $ = (s) => document.querySelector(s);
+const api = async (url, opt = {}) => {
+  const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opt });
+  if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error || 'خطأ'); }
+  return r.json();
+};
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function imgSrc(u){ return u ? (u.startsWith('/') ? u : '/img?u=' + encodeURIComponent(u)) : ''; }
+
+async function load() {
+  DB = await api('/api/all');
+  if (!curCat && DB.categories.length) curCat = [...DB.categories].sort((a,b)=>a.order-b.order)[0].id;
+  render();
+}
+
+function render() {
+  const cats = [...DB.categories].sort((a,b)=>a.order-b.order);
+  const ul = $('#catList'); ul.innerHTML = '';
+  cats.forEach((c, idx) => {
+    const li = document.createElement('li');
+    if (c.id === curCat) li.classList.add('active');
+    if (!c.visible) li.classList.add('hiddenCat');
+    const cnt = DB.items.filter(i=>i.categoryId===c.id).length;
+    li.innerHTML = `<span class="catName">${c.name_ar || c.name_en}</span> <span class="cnt">(${cnt})</span><span class="grow"></span>
+      <button class="iconbtn" title="أعلى">▲</button>
+      <button class="iconbtn" title="أسفل">▼</button>
+      <button class="iconbtn" title="تعديل">✏️</button>
+      <button class="iconbtn" title="إظهار/إخفاء">${c.visible?'👁️':'🚫'}</button>
+      <button class="iconbtn" title="حذف">🗑️</button>`;
+    li.addEventListener('click', () => { curCat = c.id; render(); });
+    const btns = li.querySelectorAll('.iconbtn');
+    btns[0].onclick = (e)=>{e.stopPropagation(); moveCat(idx,-1);};
+    btns[1].onclick = (e)=>{e.stopPropagation(); moveCat(idx,1);};
+    btns[2].onclick = async (e)=>{e.stopPropagation();
+      const ar = prompt('الاسم بالعربي:', c.name_ar); if(ar===null) return;
+      const en = prompt('الاسم بالإنجليزي:', c.name_en||''); if(en===null) return;
+      await api('/api/categories/'+c.id,{method:'PUT',body:JSON.stringify({name_ar:ar,name_en:en})});
+      load();
+    };
+    btns[3].onclick = async (e)=>{e.stopPropagation();
+      await api('/api/categories/'+c.id,{method:'PUT',body:JSON.stringify({visible:!c.visible})});
+      load();
+    };
+    btns[4].onclick = async (e)=>{e.stopPropagation();
+      if(!confirm('حذف القسم وكل أصنافه؟ ('+(c.name_ar||c.name_en)+')')) return;
+      await api('/api/categories/'+c.id,{method:'DELETE'});
+      if(curCat===c.id) curCat=null;
+      load(); toast('تم حذف القسم');
+    };
+    ul.appendChild(li);
+  });
+
+  const cat = cats.find(c=>c.id===curCat);
+  $('#curCatName').textContent = cat ? (cat.name_ar||cat.name_en) : 'اختر قسماً';
+  const list = $('#itemList'); list.innerHTML = '';
+  if (!cat) { list.innerHTML = '<div class="empty">اختر قسماً من القائمة أو أضف قسماً جديداً</div>'; return; }
+  const items = DB.items.filter(i=>i.categoryId===cat.id).sort((a,b)=>a.order-b.order);
+  if (!items.length) list.innerHTML = '<div class="empty">لا توجد أصناف — أضف صنفاً جديداً</div>';
+  items.forEach((it, idx) => {
+    const row = document.createElement('div');
+    row.className = 'item-row' + (it.visible?'':' hiddenItem');
+    const cur = DB.settings.currency || 'ر.س';
+    let priceHtml = `<span class="pricebadge">${it.price} ${cur}</span>`;
+    if (it.price2 != null) priceHtml += ` <span class="pricebadge">${it.price2} ${cur}</span>`;
+    row.innerHTML = `
+      <img src="${imgSrc(it.image)}" loading="lazy" onerror="this.style.visibility='hidden'">
+      <div class="info">
+        <div class="nm">${it.name_ar || it.name_en}</div>
+        ${it.name_en && it.name_ar ? `<div class="en">${it.name_en}</div>` : ''}
+        ${it.desc_ar ? `<div class="desc">${it.desc_ar}</div>` : ''}
+      </div>
+      ${it.calories!=null ? `<span class="kcal">${it.calories} kcal</span>`:''}
+      ${priceHtml}
+      <label class="switch" title="إظهار/إخفاء"><input type="checkbox" ${it.visible?'checked':''}><span></span></label>
+      <button class="iconbtn" title="أعلى">▲</button>
+      <button class="iconbtn" title="أسفل">▼</button>
+      <button class="iconbtn" title="تعديل">✏️</button>
+      <button class="iconbtn" title="حذف">🗑️</button>`;
+    row.querySelector('.switch input').addEventListener('change', async (e)=>{
+      await api('/api/items/'+it.id,{method:'PUT',body:JSON.stringify({visible:e.target.checked})});
+      it.visible = e.target.checked; render();
+    });
+    const bs = row.querySelectorAll('.iconbtn');
+    bs[0].onclick = ()=>moveItem(items, idx, -1);
+    bs[1].onclick = ()=>moveItem(items, idx, 1);
+    bs[2].onclick = ()=>openItemDlg(it);
+    bs[3].onclick = async ()=>{
+      if(!confirm('حذف الصنف: '+(it.name_ar||it.name_en)+'؟')) return;
+      await api('/api/items/'+it.id,{method:'DELETE'}); load(); toast('تم الحذف');
+    };
+    list.appendChild(row);
+  });
+}
+
+async function moveCat(idx, dir) {
+  const cats = [...DB.categories].sort((a,b)=>a.order-b.order);
+  const j = idx + dir;
+  if (j < 0 || j >= cats.length) return;
+  [cats[idx], cats[j]] = [cats[j], cats[idx]];
+  await api('/api/categories/reorder',{method:'PUT',body:JSON.stringify({ids:cats.map(c=>c.id)})});
+  load();
+}
+async function moveItem(items, idx, dir) {
+  const j = idx + dir;
+  if (j < 0 || j >= items.length) return;
+  const arr = [...items];
+  [arr[idx], arr[j]] = [arr[j], arr[idx]];
+  await api('/api/items/reorder',{method:'PUT',body:JSON.stringify({ids:arr.map(i=>i.id)})});
+  load();
+}
+
+// ---- item dialog ----
+function openItemDlg(it) {
+  editItemId = it ? it.id : null;
+  $('#dlgItemTitle').textContent = it ? 'تعديل صنف' : 'صنف جديد';
+  const f = $('#frmItem');
+  f.reset();
+  const sel = $('#selCat');
+  sel.innerHTML = [...DB.categories].sort((a,b)=>a.order-b.order)
+    .map(c=>`<option value="${c.id}">${c.name_ar||c.name_en}</option>`).join('');
+  sel.value = it ? it.categoryId : curCat;
+  if (it) {
+    for (const k of ['name_ar','name_en','desc_ar','desc_en','price','price2','price_label','price2_label','calories','image']) {
+      if (f[k]) f[k].value = it[k] ?? '';
+    }
+    f.visible.checked = it.visible;
+  } else {
+    f.visible.checked = true;
+  }
+  updatePreview();
+  $('#dlgItem').showModal();
+}
+function updatePreview(){
+  const u = $('#imgUrl').value.trim();
+  const img = $('#imgPreview');
+  img.style.visibility = u ? 'visible':'hidden';
+  if(u) img.src = imgSrc(u);
+}
+$('#imgUrl').addEventListener('input', updatePreview);
+$('#imgFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const fd = new FormData(); fd.append('image', file);
+  const r = await fetch('/api/upload',{method:'POST',body:fd});
+  const j = await r.json();
+  if(j.url){ $('#imgUrl').value = j.url; updatePreview(); toast('تم رفع الصورة'); }
+});
+$('#frmItem').addEventListener('submit', async (e)=>{
+  if (e.submitter && e.submitter.value === 'cancel') return;
+  e.preventDefault();
+  const f = e.target;
+  const body = {
+    categoryId: f.categoryId.value,
+    name_ar: f.name_ar.value.trim(),
+    name_en: f.name_en.value.trim(),
+    desc_ar: f.desc_ar.value.trim(),
+    desc_en: f.desc_en.value.trim(),
+    price: f.price.value,
+    price2: f.price2.value || null,
+    price_label: f.price_label.value.trim(),
+    price2_label: f.price2_label.value.trim(),
+    calories: f.calories.value || null,
+    image: f.image.value.trim(),
+    visible: f.visible.checked
+  };
+  if (editItemId) await api('/api/items/'+editItemId,{method:'PUT',body:JSON.stringify(body)});
+  else await api('/api/items',{method:'POST',body:JSON.stringify(body)});
+  $('#dlgItem').close();
+  load(); toast('تم الحفظ ✅');
+});
+
+$('#btnAddItem').onclick = ()=>{ if(!curCat){toast('أضف قسماً أولاً');return;} openItemDlg(null); };
+$('#btnAddCat').onclick = async ()=>{
+  const ar = prompt('اسم القسم بالعربي:'); if(!ar) return;
+  const en = prompt('اسم القسم بالإنجليزي (اختياري):')||'';
+  const c = await api('/api/categories',{method:'POST',body:JSON.stringify({name_ar:ar,name_en:en})});
+  curCat = c.id; load(); toast('تمت الإضافة');
+};
+
+// ---- import/export ----
+$('#btnImport').onclick = ()=>$('#dlgImport').showModal();
+$('#btnDoImport').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  const file = $('#impFile').files[0];
+  if(!file){ toast('اختر ملفاً أولاً'); return; }
+  const mode = document.querySelector('input[name=impMode]:checked').value;
+  if(mode==='replace' && !confirm('سيتم حذف كل الأقسام والأصناف الحالية. متابعة؟')) return;
+  const fd = new FormData(); fd.append('file', file);
+  const r = await fetch('/api/import?mode='+mode,{method:'POST',body:fd});
+  const j = await r.json();
+  if(j.error){ toast('خطأ: '+j.error); return; }
+  $('#dlgImport').close();
+  curCat = null; load();
+  toast(`تم الاستيراد: ${j.added} جديد، ${j.updated} محدّث`);
+});
+$('#btnExportCsv').onclick = ()=>location.href='/api/export.csv';
+$('#btnExportXlsx').onclick = ()=>location.href='/api/export.xlsx';
+
+// ---- settings ----
+$('#btnSettings').onclick = ()=>{
+  const f = $('#frmSettings');
+  for (const k of ['name_ar','name_en','slogan','currency','social','publicUrl','logo'])
+    if (f[k]) f[k].value = DB.settings[k] || '';
+  $('#dlgSettings').showModal();
+};
+$('#logoFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const fd = new FormData(); fd.append('image', file);
+  const r = await fetch('/api/upload',{method:'POST',body:fd});
+  const j = await r.json();
+  if(j.url){ $('#logoUrl').value = j.url; toast('تم رفع الشعار'); }
+});
+$('#frmSettings').addEventListener('submit', async (e)=>{
+  if (e.submitter && e.submitter.value === 'cancel') return;
+  e.preventDefault();
+  const f = e.target;
+  const body = {};
+  for (const k of ['name_ar','name_en','slogan','currency','social','publicUrl','logo']) body[k] = f[k].value.trim();
+  await api('/api/settings',{method:'PUT',body:JSON.stringify(body)});
+  $('#dlgSettings').close(); load(); toast('تم حفظ الإعدادات');
+});
+
+// ---- QR ----
+let qrObj = null;
+$('#btnQr').onclick = ()=>{
+  const url = DB.settings.publicUrl || (location.origin + '/menu');
+  $('#qrCanvas').innerHTML = '';
+  qrObj = new QRCode($('#qrCanvas'), { text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+  $('#qrUrl').textContent = url;
+  $('#dlgQr').showModal();
+};
+$('#btnQrDownload').onclick = ()=>{
+  const img = $('#qrCanvas img') || $('#qrCanvas canvas');
+  const a = document.createElement('a');
+  a.download = 'menu-qr.png';
+  a.href = img.tagName==='IMG' ? img.src : img.toDataURL();
+  a.click();
+};
+
+load();
+</script>
+</body>
+</html>

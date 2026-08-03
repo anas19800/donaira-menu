@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import pypdfium2; print\\('pypdfium2 ok'\\)\")",
+      "Bash(python -c \"import fitz; print\\('fitz ok'\\)\")",
+      "Bash(python -c \"import pypdf; print\\('pypdf ok'\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -)",
+      "Bash(PYTHONIOENCODING=utf-8 python -)",
+      "Bash(npm --version)",
+      "Bash(cp \"C:\\\\Users\\\\abdulrazaka\\\\Downloads\\\\shawermagy_menu.csv\" \"C:\\\\Users\\\\abdulrazaka\\\\Cloude\\\\Menu\\\\seed_menu.csv\")",
+      "Bash(npm install *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type} %{size_download}\" \"http://localhost:3000/img?u=https%3A%2F%2Fimages.taker.io%2Fshawermagy%2F1f5aec1ade01af3f1bc0edce88ec0b48.jpg\")",
+      "Bash(curl -s \"http://localhost:3000/api/export.csv\")",
+      "Bash(curl -s -o /dev/null -w \"xlsx: %{http_code} %{size_download} bytes\" \"http://localhost:3000/api/export.xlsx\")",
+      "Bash(curl -s \"http://localhost:3000/api/export.csv\" -o roundtrip.csv)",
+      "Bash(curl -s -F \"file=@roundtrip.csv\" \"http://localhost:3000/api/import?mode=merge\")",
+      "Bash(curl -s \"http://localhost:3000/api/all\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('cats:',len\\(d['categories']\\),'items:',len\\(d['items']\\)\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(xxd)",
+      "Bash(python -c ' *)",
+      "Bash(curl -s -X PUT \"http://localhost:3000/api/settings\" -H \"Content-Type: application/json\" -d '{\"name_ar\":\"دونيرا\",\"name_en\":\"DONAIRA\",\"slogan\":\"\",\"social\":\"\",\"logo\":\"/uploads/logo.png\"}')",
+      "Bash(curl -s \"http://localhost:3000/api/export.csv\" -o rt2.csv)",
+      "Bash(curl -s -F \"file=@rt2.csv;type=text/csv\" \"http://localhost:3000/api/import?mode=merge\")",
+      "Bash(gh auth *)",
+      "Bash(git --version)",
+      "Read(//c/Program Files/GitHub CLI/**)",
+      "Bash(where gh *)",
+      "Bash(git config *)",
+      "Bash(git credential *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'دونيرا: نظام إدارة وعرض المنيو مع توليد PDF و QR *)"
+    ]
+  }
+}
