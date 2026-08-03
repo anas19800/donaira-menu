@@ -28,7 +28,7 @@
       "name_ar": "المشويات",
       "name_en": "",
       "order": 2,
-      "visible": true
+      "visible": false
     },
     {
       "id": "msd7m0v8js2436",
@@ -94,16 +94,16 @@
       "id": "msd7m0v8yb60gg",
       "categoryId": "msd7m0v8xbccy9",
       "order": 1,
-      "name_ar": "",
+      "name_ar": "شاورما مشكلة",
       "name_en": "Shawermagy Mix",
       "price": 14,
       "price2": null,
       "price_label": "",
       "price2_label": "",
       "image": "https://images.taker.io/shawermagy/a73a08a5ee1989070623c5f58145a984.jpg",
-      "desc_ar": "",
+      "desc_ar": "افضل انواع البطاطا المسقية من ماء السماء الصافية و مقطعة بسيف ماكوتوشوا السحري",
       "desc_en": "",
-      "calories": null,
+      "calories": 520,
       "visible": true
     },
     {
