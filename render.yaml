@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: donaira-menu
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeployTrigger: commit
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        value: anas19800/donaira-menu
+      - key: DATA_BRANCH
+        value: data

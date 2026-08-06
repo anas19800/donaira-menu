@@ -34,7 +34,10 @@
       "Bash(git commit -m 'دونيرا: نظام إدارة وعرض المنيو مع توليد PDF و QR *)",
       "Bash(git remote *)",
       "Bash(git push *)",
-      "Bash(node publish.js --push)"
+      "Bash(node publish.js --push)",
+      "Bash(node -c server.js)",
+      "Bash(node --check server.js)",
+      "Bash(git commit -m 'وضع السحابة: حماية بكلمة مرور + مزامنة البيانات مع GitHub + قراءة حية للمنيو *)"
     ]
   }
 }

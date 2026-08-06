@@ -25,12 +25,18 @@ if (fs.existsSync(up)) {
   for (const f of fs.readdirSync(up)) fs.copyFileSync(path.join(up, f), path.join(dup, f));
 }
 
-// adapt menu.html for static hosting (no server: direct image URLs, local data.json)
+// adapt menu.html for static hosting:
+// live data from the GitHub "data" branch (falls back to the baked data.json),
+// uploaded images from raw.githubusercontent, external image URLs direct
+const RAW = 'https://raw.githubusercontent.com/anas19800/donaira-menu/data/data';
 let html = fs.readFileSync(path.join(root, 'public', 'menu.html'), 'utf8');
-html = html.replace("fetch('/api/all')", "fetch('./data.json?t='+Date.now())");
+html = html.replace(
+  "DB = await (await fetch('/api/all')).json();",
+  `let _r; try { _r = await fetch('${RAW}/db.json?t='+Date.now()); if(!_r.ok) throw 0; } catch(e) { _r = await fetch('./data.json?t='+Date.now()); } DB = await _r.json();`
+);
 html = html.replace(
   "function imgSrc(u){ return u ? (u.startsWith('/') ? u : '/img?u='+encodeURIComponent(u)) : ''; }",
-  "function imgSrc(u){ return u ? (u.startsWith('/uploads/') ? u.slice(1) : u) : ''; }"
+  `function imgSrc(u){ return u ? (u.startsWith('/uploads/') ? '${RAW}'+u : u) : ''; }`
 );
 fs.writeFileSync(path.join(docs, 'index.html'), html, 'utf8');
 fs.writeFileSync(path.join(docs, '.nojekyll'), '');
@@ -45,5 +51,10 @@ if (process.argv.includes('--push')) {
     console.log('لا تغييرات جديدة للحفظ');
   }
   execSync('git push origin main', { cwd: root, stdio: 'pipe' });
-  console.log('تم الرفع إلى GitHub — سيتحدث الموقع خلال دقيقةتقريباً');
+  try {
+    execSync('git push origin main:data', { cwd: root, stdio: 'pipe' });
+  } catch (e) {
+    console.log('تنبيه: فرع البيانات (data) فيه تعديلات أحدث من السحابة — لم يُستبدل');
+  }
+  console.log('تم الرفع إلى GitHub — سيتحدث الموقع خلال دقيقة تقريباً');
 }

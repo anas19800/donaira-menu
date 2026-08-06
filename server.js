@@ -1,4 +1,4 @@
-/* شاورمجي - نظام إدارة المنيو */
+/* دونيرا - نظام إدارة المنيو */
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -7,6 +7,11 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 
 const PORT = process.env.PORT || 3000;
+// إعدادات السحابة (تُفعّل تلقائياً عند وجود متغيرات البيئة على الاستضافة)
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'anas19800/donaira-menu';
+const DATA_BRANCH = process.env.DATA_BRANCH || 'data';
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
@@ -48,6 +53,70 @@ function loadDb() {
 }
 function saveDb() {
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+  scheduleSync();
+}
+
+// ---------- مزامنة البيانات مع GitHub (وضع السحابة) ----------
+function ghApi(p, opt = {}) {
+  return fetch('https://api.github.com' + p, {
+    ...opt,
+    headers: {
+      'Authorization': 'token ' + GITHUB_TOKEN,
+      'Accept': 'application/vnd.github+json',
+      'User-Agent': 'donaira-menu',
+      ...(opt.headers || {})
+    }
+  });
+}
+async function ghGetFile(filePath) {
+  const r = await ghApi(`/repos/${GITHUB_REPO}/contents/${filePath}?ref=${DATA_BRANCH}`);
+  if (!r.ok) return null;
+  return r.json();
+}
+async function ghPutFile(filePath, buf, msg) {
+  try {
+    const cur = await ghGetFile(filePath);
+    const body = { message: msg, branch: DATA_BRANCH, content: buf.toString('base64') };
+    if (cur && cur.sha) body.sha = cur.sha;
+    const r = await ghApi(`/repos/${GITHUB_REPO}/contents/${filePath}`, { method: 'PUT', body: JSON.stringify(body) });
+    if (!r.ok) console.error('فشل رفع', filePath, 'إلى GitHub:', r.status, (await r.text()).slice(0, 200));
+    else console.log('تمت مزامنة', filePath, 'مع GitHub');
+    return r.ok;
+  } catch (e) {
+    console.error('خطأ مزامنة GitHub:', e.message);
+    return false;
+  }
+}
+let syncTimer = null;
+function scheduleSync() {
+  if (!GITHUB_TOKEN) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    ghPutFile('data/db.json', Buffer.from(JSON.stringify(db, null, 2)), 'تحديث بيانات المنيو');
+  }, 3000);
+}
+async function pullFromGitHub() {
+  if (!GITHUB_TOKEN) return;
+  try {
+    const f = await ghGetFile('data/db.json');
+    if (f && f.content) {
+      fs.writeFileSync(DB_FILE, Buffer.from(f.content, 'base64'));
+      console.log('تم سحب أحدث بيانات المنيو من GitHub');
+    }
+    const r = await ghApi(`/repos/${GITHUB_REPO}/contents/data/uploads?ref=${DATA_BRANCH}`);
+    if (r.ok) {
+      const list = await r.json();
+      for (const it of list) {
+        const local = path.join(UPLOADS_DIR, it.name);
+        if (!fs.existsSync(local) && it.download_url) {
+          const fr = await fetch(it.download_url);
+          fs.writeFileSync(local, Buffer.from(await fr.arrayBuffer()));
+        }
+      }
+    }
+  } catch (e) {
+    console.error('فشل السحب من GitHub:', e.message);
+  }
 }
 
 function isArabic(s) {
@@ -165,11 +234,52 @@ function importRows(rows, mode) {
   return { added, updated };
 }
 
-loadDb();
-
 // ---------- App ----------
 const app = express();
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false }));
+
+// ---------- حماية لوحة التحكم بكلمة مرور (وضع السحابة) ----------
+function authToken() {
+  return crypto.createHash('sha256').update('donaira-auth|' + ADMIN_PASSWORD).digest('hex');
+}
+function isAuthed(req) {
+  if (!ADMIN_PASSWORD) return true;
+  const m = /(?:^|;\s*)auth=([a-f0-9]+)/.exec(req.headers.cookie || '');
+  return !!(m && m[1] === authToken());
+}
+app.use((req, res, next) => {
+  if (!ADMIN_PASSWORD) return next();
+  const p = req.path;
+  const isPublic =
+    p === '/' || p === '/menu' || p === '/menu.html' || p === '/login' ||
+    p === '/img' || p.startsWith('/uploads/') || p === '/api/all' || p === '/favicon.ico';
+  if (isPublic || isAuthed(req)) return next();
+  if (p.startsWith('/api/')) return res.status(401).json({ error: 'غير مصرح — سجّل الدخول' });
+  return res.redirect('/login');
+});
+app.get('/login', (req, res) => {
+  res.send(`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>دخول الإدارة — دونيرا</title>
+<style>body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f6f4f1;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+.card{background:#fff;border-radius:16px;padding:36px;box-shadow:0 10px 40px rgba(0,0,0,.1);text-align:center;width:320px}
+h1{color:#a3121f;font-size:22px;margin:0 0 18px}
+input{width:100%;padding:11px;border:1.5px solid #ddd;border-radius:10px;font-size:15px;box-sizing:border-box;margin-bottom:12px;text-align:center}
+button{width:100%;padding:11px;border:none;border-radius:10px;background:#ec1c24;color:#fff;font-size:15px;font-weight:bold;cursor:pointer}
+.err{color:#c0392b;font-size:13px;margin-bottom:8px}</style></head><body>
+<div class="card"><h1>🍽️ إدارة منيو دونيرا</h1>
+${req.query.e ? '<div class="err">كلمة المرور غير صحيحة</div>' : ''}
+<form method="POST" action="/login"><input type="password" name="password" placeholder="كلمة المرور" autofocus required>
+<button>دخول</button></form></div></body></html>`);
+});
+app.post('/login', (req, res) => {
+  if ((req.body.password || '') === ADMIN_PASSWORD) {
+    res.setHeader('Set-Cookie', `auth=${authToken()}; HttpOnly; Path=/; Max-Age=2592000; SameSite=Lax`);
+    return res.redirect('/admin');
+  }
+  res.redirect('/login?e=1');
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
@@ -368,6 +478,9 @@ app.get('/api/export.csv', (req, res) => {
 // ---- image upload ----
 app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'لم يتم رفع ملف' });
+  if (GITHUB_TOKEN) {
+    ghPutFile('data/uploads/' + req.file.filename, fs.readFileSync(req.file.path), 'رفع صورة');
+  }
   res.json({ url: '/uploads/' + req.file.filename });
 });
 
@@ -404,7 +517,13 @@ app.get('/img', async (req, res) => {
 });
 
 // ---- publish to GitHub Pages ----
-app.post('/api/publish', (req, res) => {
+app.post('/api/publish', async (req, res) => {
+  if (GITHUB_TOKEN) {
+    // وضع السحابة: رفع البيانات فوراً — صفحة الزبائن تقرأها مباشرة
+    clearTimeout(syncTimer);
+    const ok = await ghPutFile('data/db.json', Buffer.from(JSON.stringify(db, null, 2)), 'نشر المنيو');
+    return ok ? res.json({ ok: true }) : res.status(500).json({ error: 'فشلت المزامنة مع GitHub' });
+  }
   const { execFile } = require('child_process');
   execFile(process.execPath, [path.join(__dirname, 'publish.js'), '--push'], { cwd: __dirname, timeout: 120000 }, (err, stdout, stderr) => {
     if (err) return res.status(500).json({ error: ((stderr || '') + (err.message || '')).slice(-500) });
@@ -418,9 +537,15 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'adm
 app.get('/menu', (req, res) => res.sendFile(path.join(__dirname, 'public', 'menu.html')));
 app.get('/print', (req, res) => res.sendFile(path.join(__dirname, 'public', 'print.html')));
 
-app.listen(PORT, () => {
-  console.log('نظام المنيو يعمل على  http://localhost:' + PORT);
-  console.log('  الإدارة:   http://localhost:' + PORT + '/admin');
-  console.log('  المنيو:    http://localhost:' + PORT + '/menu');
-  console.log('  الطباعة:   http://localhost:' + PORT + '/print');
-});
+(async () => {
+  await pullFromGitHub();
+  loadDb();
+  app.listen(PORT, () => {
+    console.log('نظام المنيو يعمل على  http://localhost:' + PORT);
+    console.log('  الإدارة:   http://localhost:' + PORT + '/admin');
+    console.log('  المنيو:    http://localhost:' + PORT + '/menu');
+    console.log('  الطباعة:   http://localhost:' + PORT + '/print');
+    if (ADMIN_PASSWORD) console.log('  الحماية بكلمة مرور: مفعّلة');
+    if (GITHUB_TOKEN) console.log('  مزامنة GitHub: مفعّلة (' + GITHUB_REPO + ' → ' + DATA_BRANCH + ')');
+  });
+})();
