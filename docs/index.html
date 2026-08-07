@@ -57,13 +57,13 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 <script>
 let DB=null, LANG='ar';
 const $=s=>document.querySelector(s);
-function imgSrc(u){ return u ? (u.startsWith('/uploads/') ? u.slice(1) : u) : ''; }
+function imgSrc(u){ return u ? (u.startsWith('/uploads/') ? 'https://raw.githubusercontent.com/anas19800/donaira-menu/data/data'+u : u) : ''; }
 function nm(o){ return LANG==='ar' ? (o.name_ar||o.name_en) : (o.name_en||o.name_ar); }
 function sub(o){ const p=nm(o); const s=LANG==='ar'?o.name_en:o.name_ar; return s&&s!==p?s:''; }
 function ds(o){ return LANG==='ar' ? o.desc_ar : (o.desc_en||o.desc_ar); }
 
 async function load(){
-  DB = await (await fetch('./data.json?t='+Date.now())).json();
+  let _r; try { _r = await fetch('https://raw.githubusercontent.com/anas19800/donaira-menu/data/data/db.json?t='+Date.now()); if(!_r.ok) throw 0; } catch(e) { _r = await fetch('./data.json?t='+Date.now()); } DB = await _r.json();
   render();
 }
 function render(){
